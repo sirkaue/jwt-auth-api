@@ -1,8 +1,10 @@
 package com.sirkaue.jwtauthapi.controller;
 
 import com.sirkaue.jwtauthapi.dto.request.LoginRequest;
+import com.sirkaue.jwtauthapi.dto.request.RefreshTokenRequest;
 import com.sirkaue.jwtauthapi.dto.request.RegisterRequest;
 import com.sirkaue.jwtauthapi.dto.response.AuthResultResponse;
+import com.sirkaue.jwtauthapi.dto.response.AuthSessionResponse;
 import com.sirkaue.jwtauthapi.security.authetication.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +30,12 @@ public class AuthController {
     public ResponseEntity<AuthResultResponse> login(@RequestBody LoginRequest request) {
         AuthResultResponse result = authService.login(request);
         return ResponseEntity.ok().body(result);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthSessionResponse> refresh(@RequestBody RefreshTokenRequest request) {
+        AuthResultResponse result = authService.refreshToken(request);
+        return ResponseEntity.ok()
+                .body(new AuthSessionResponse(result.accessTokenExpiresAt(), result.refreshToken(), result.refreshTokenExpiresAt()));
     }
 }
