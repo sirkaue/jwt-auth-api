@@ -1,5 +1,6 @@
 package com.sirkaue.jwtauthapi.controller;
 
+import com.sirkaue.jwtauthapi.dto.request.LoginRequest;
 import com.sirkaue.jwtauthapi.dto.request.RegisterRequest;
 import com.sirkaue.jwtauthapi.dto.response.AuthResultResponse;
 import com.sirkaue.jwtauthapi.security.authetication.AuthService;
@@ -20,6 +21,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResultResponse> register(@RequestBody RegisterRequest request) {
         AuthResultResponse result = authService.register(request);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResultResponse> login(@RequestBody LoginRequest request) {
+        AuthResultResponse result = authService.login(request);
         return ResponseEntity.ok().body(result);
     }
 }
