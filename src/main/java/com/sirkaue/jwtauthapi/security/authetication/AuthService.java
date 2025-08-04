@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,24 +32,16 @@ public class AuthService {
             throw new IllegalArgumentException("Passwords don't match");
         }
 
-        var user = User.builder()
-                .name(request.name())
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .build();
+        User user = new User(request.name(), request.email(), passwordEncoder.encode(request.password()));
 
         userRepository.save(user);
-
         return generateAuthResult(user);
     }
 
     public AuthResultResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
-        );
+        Authentication authentication = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+
         UserAuthenticated principal = (UserAuthenticated) authentication.getPrincipal();
         User user = principal.getUser();
         return generateAuthResult(user);
@@ -62,15 +56,26 @@ public class AuthService {
 
 //        String userEmail = jwtService.extractUsername(refreshToken);
         Long userId = jwtService.extractUserId(refreshToken);
-        var user = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        if (!refreshToken.equals(user.getRefreshToken())) {
+            throw new IllegalArgumentException("Refresh token does not match");
+        }
+
+        if (user.getRefreshTokenExpiresAt().isBefore(Instant.now())) {
+            throw new IllegalArgumentException("Refresh token expired");
+        }
         return generateAuthResult(user);
     }
 
     private AuthResultResponse generateAuthResult(User user) {
         TokenWithExpiration accessToken = jwtService.generateAccessToken(user);
         TokenWithExpiration refreshToken = jwtService.generateRefreshToken(user);
+
+        user.setRefreshToken(refreshToken.token());
+        user.setRefreshTokenExpiresAt(refreshToken.expiresAt());
+        userRepository.save(user);
 
         return new AuthResultResponse(
                 accessToken.token(),
