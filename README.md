@@ -64,6 +64,7 @@ Esta API foi construída com o propósito de demonstrar, de forma clara e funcio
 - **Spring Security (JWT Resource Server)**
 - **Spring Web**
 - **JPA / Hibernate**
+- **Lombok**
 - **H2 Database (memória)**
 
 ---
